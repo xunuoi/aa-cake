@@ -51,11 +51,11 @@ function sendMessage(data, cb){
 const actionMap = {
     copy: (txt) => {
         copyToClipboard(txt);
-        tip('URL Copied', 800, false);
+        tip('URL Copied!', 900, false);
 
-        // setTimeout(() => {
-        //     window.close();
-        // }, 4200);
+        setTimeout(() => {
+            window.close();
+        }, 5500);
     }
 }
 
