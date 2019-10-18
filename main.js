@@ -88,6 +88,21 @@ chrome.runtime.onMessage.addListener(function(req, sender, sendRes) {
    
 });
 
+const sendAction = (action, data, cb) => {
+    return sendMessage(
+            {
+                status: "request", 
+                source: 'main.js',
+                target: 'popup.js',
+                action: action,
+                data: data,
+            }, 
+            function(res) {
+                cb && cb(res);
+            }
+        );;
+}
+
 const actionMessageMap = {
     clean: (req) => {
         cleanAndReload();
@@ -96,17 +111,16 @@ const actionMessageMap = {
         foldFiles(type);
     },
     copy: (req) => {
-        sendMessage(
-            {
-                status: "request", 
-                source: 'main.js',
-                target: 'popup.js',
-                action: 'copy',
-                data: location.href,
-            }, 
-            function(res) {}
-        );
-    }
+        sendAction('copy', location.href);
+      
+    },
+    sync: (req)=> {
+        sendAction('sync', location);
+    },
+    switch: (req, type) => {
+        const newHostURL = `${location.protocol}//${type}${location.pathname}`;
+        window.open(newHostURL);
+    },
 }
 
 // business =======
