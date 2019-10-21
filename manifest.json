@@ -1,6 +1,6 @@
 {  
   "name": "AA-Cake",  
-  "version": "0.0.2", 
+  "version": "0.0.4",
   "manifest_version": 2,
   "description": "AA Cake quick tool for FE",
   "browser_action": {  
