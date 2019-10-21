@@ -10,6 +10,12 @@ html, body, body * {
     -moz-box-sizing:border-box; /* Firefox */
     -webkit-box-sizing:border-box; /* Safari */
 }
+
+html, body {
+    padding: 0;
+    margin: 0;
+}
+
 ul,li {
     list-style: none;
     margin: 0;
@@ -18,21 +24,25 @@ ul,li {
 .ui-panel {
     width: 100%;
     min-width: 180px;
-    padding: 10px 15px;
 }
 .ui-panel-title {
     position: relative;
     width: 100%;
-    margin-bottom: 12px;
+    padding: 6px 4px;
     /* text-align:center; */
     /*color: #d875a1;*/
 }
 .ui-panel-main {
     width: 100%;
-    padding: 6px 8px 0 8px;
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
+    padding: 15px 4px 10px 4px;
+    min-height: 60px;
+
+    background-image: linear-gradient(-45deg, #42275A 0, #734B6D 100%);
+    background-image: -webkit-linear-gradient(-45deg, #42275A 0, #734B6D 100%);
+    background-image: -moz-linear-gradient(-45deg, #42275A 0, #734B6D 100%);
 }
 
 .ui-panel-main > :nth-child(n + 2) {
@@ -61,13 +71,9 @@ ul,li {
     margin-bottom: 0;
 }
 
-.ui-panel-main.submit-panel {
-    padding-top: 1px;
-}
-
 .ui-btn {
     /* display: inline-block; */
-    border: 1px solid #000;
+    border: 1px solid #fff;
     border-radius: 50px;
     width: 140px;
     height: 30px;
@@ -75,27 +81,33 @@ ul,li {
     cursor: pointer;
     line-height: 30px;
     outline: none;
+    color: #fff;
 }
 .ui-btn:hover, .ui-btn:active, .ui-btn:focus {
-    background: #000;
-    color: #FFF;
+    background: #fff;
+    color: #000;
 }
 
 .ui-btn.link a {
     text-decoration: none;
-    color: #000;
+    color: #fff;
 }
 .ui-btn.link a:hover, .ui-btn.link a:active, .ui-btn.link a:focus {
-    color: #000;
+    color: #fff;
 }
 
-.ui-btn.clear {
+/* .ui-btn.clear {
     border-color: red;
     color: red;
 }
 .ui-btn.clear:hover, .ui-btn.clear:active, .ui-btn.clear:focus {
     background: red;
     color: #FFF;
+} */
+
+.loading-wrapper {
+    width: 140px;
+    text-align: center;
 }
 
 #action-tip {
@@ -109,13 +121,20 @@ ul,li {
 .mc-logo {
     width: 24px;
     height: 24px;
-    margin-left: 22px;
+    margin-left: 30px;
 }
 
 #cake-title {
     position: absolute;
-    left: 50px;
-    top:5px;
+    left: 60px;
+    top: 12px;
+}
+#cake-title.highlight {
+    color: red;
+}
+
+.hide {
+    display: none;
 }
 
 </style>
@@ -126,13 +145,14 @@ ul,li {
         <span id="cake-title"></span>
         <img class="mc-logo" width="24" height="24" src="cake-mc.gif" />
     </div>
-    <div id="action-panel" class="ui-panel-main submit-panel">
+    <div id="action-panel" class="ui-panel-main">
         <!-- <div id="action-tip"></div> -->
-        <div class="ui-btn clear action_btn" data-action="clean">Clean and Reload</div>
-        <div class="ui-btn action_btn" data-action="fold" data-type="test" >Fold Snaps</div>
-        <div class="ui-btn action_btn" data-action="fold" data-type="test">Fold Tests</div>
-        <div class="ui-btn action_btn" data-action="switch" data-type="localhost" disabled>Loading...</div>
-        <div class="ui-btn static_action_btn" data-action="copyJSON" disabled>Loading...</div>
+        <div class="ui-btn action_btn" data-action="clean">Clean and Reload</div>
+        <div class="ui-btn action_btn hide" data-action="fold" data-type="test" >Fold Snaps</div>
+        <div class="ui-btn action_btn hide" data-action="fold" data-type="test">Fold Tests</div>
+        <div class="ui-btn action_btn hide" data-action="switch" data-type="localhost" disabled>...Checking</div>
+        <div class="ui-btn static_action_btn hide" data-action="copyJSON" disabled>...Checking</div>
+        <div id="loading_icon" class="loading-wrapper"><img src="loading.svg" width="20" alt=""></div>
     </div>
 </div>
 <script type="text/javascript" src="jquery-2.1.1.min.js"></script>

@@ -1,4 +1,26 @@
-// ===================
+// Variables ===============================
+
+const $actionPanel = $('#action-panel');
+const $clearBtn = $('#clear_btn');
+const $hostBtn = $('#action-panel .action_btn[data-action="switch"]');
+const $copyJSONBtn = $('#action-panel .static_action_btn[data-action="copyJSON"]');
+const $cakeTitle = $('#cake-title');
+const $loading = $('#loading_icon');
+const titleText = 'AA Cake';
+
+const DATA_STATUS = {};
+
+
+// Basic Utils ===============================
+
+function getUrlParameter(maiPageLocation, name) {
+    name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+    var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+    var results = regex.exec(maiPageLocation.search);
+    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+};
+
+// Message Utils ===============================
 // function clearChromeStorage() {
 //     chrome.storage.sync.clear(() => {
 //         $user.val('');
@@ -19,7 +41,7 @@
 // $clearBtn.click(evt => clearChromeStorage());
 
 chrome.runtime.onMessage.addListener(function(req, sender, sendRes) {
-    console.log('Message', req);
+    // console.log('Message', req);
 
     if (req.target === 'popup.js') {
         const data = req.data;
@@ -31,49 +53,76 @@ chrome.runtime.onMessage.addListener(function(req, sender, sendRes) {
     } 
 });
 
-
-var $actionPanel = $('#action-panel');
-var $clearBtn = $('#clear_btn');
-const $hostBtn = $('#action-panel .action_btn[data-action="switch"]');
-const $copyJSONBtn = $('#action-panel .static_action_btn[data-action="copyJSON"]');
-var $cakeTitle = $('#cake-title');
-var titleText = 'AA Cake';
-
-
 function sendMessage(data, cb){
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
         chrome.tabs.sendMessage(tabs[0].id, data, cb);
     });
 }
 
-function getUrlParameter(maiPageLocation, name) {
-    name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
-    var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-    var results = regex.exec(maiPageLocation.search);
-    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
-};
+const sendActionToMainPage = (action, cb) => {
+    sendMessage(
+        {
+            status: "success", 
+            source: 'popup.js',
+            action: action,
+        }, 
+        function(res) {
+            cb && cb(res);
+        }
+    );
+}
 
+// UI Utils ===============================
+
+let initialClosePopoverTimeoutId;
+const clearInitialClosePopoverTimeoutId = () => {
+    clearTimeout(initialClosePopoverTimeoutId);
+}
+
+const closePopover = () => {
+    // window.close();
+}
+
+// Show tip
+const tip = (txt, time, shouldClose) => {
+    $cakeTitle.addClass('highlight').html(txt);
+    clearInitialClosePopoverTimeoutId();
+
+    setTimeout(() => {
+        $cakeTitle.removeClass('highlight').html(titleText);
+        shouldClose != false && closePopover();
+    }, time || 1200);
+}
+
+// Business ===============================
+
+// For Popover Page Async Action
 const actionMap = {
-    copy: (txt) => {
+    copyURL: (txt) => {
         copyToClipboard(txt);
-        tip('URL Copied!', 900, false);
-        setTimeout(() => {
-            window.close();
+        tip('URL Copied', 1000, false);
+        // The first initial close popover timeout
+        initialClosePopoverTimeoutId = setTimeout(() => {
+            closePopover();
         }, 5500);
     },
     sync: (mainPageLocation) => {
         detectMainPageHost(mainPageLocation);
-        parseRisonURL(mainPageLocation)
+        parseRisonURL(mainPageLocation);
+
+        $loading.remove();
     }
 
 }
 
-function tip(txt, time, shouldClose) {
-    $cakeTitle.html(txt);
-    setTimeout(() => {
-        $cakeTitle.html(titleText);
-        shouldClose != false && window.close();
-    }, time || 1200);
+// For Popover Page Sync Action
+// Will execute this action immediately
+const staticAction = {
+    copyJSON: (evt) => {
+        const queryJSON = DATA_STATUS['query-json'];
+        copyToClipboard(JSON.stringify(queryJSON, null, '    '));
+        tip('JSON Copied', 1000, false);
+    }
 }
 
 const detectMainPageHost = (maiPageLocation) => {
@@ -88,18 +137,16 @@ const detectMainPageHost = (maiPageLocation) => {
     $hostBtn.data('type', targetHost);
     $hostBtn.removeAttr('disabled');
 
-    // For gitlab
+    // Show different actions for different sites
     if (maiPageLocation.href.match(/git\.appannie/)) {
-        // gitlab page
-        $actionPanel.find('.action_btn[data-action="switch"]').remove();
-        $actionPanel.find('.action_btn[data-action="clean"]').remove();
+        // gitlab site
+        $actionPanel.find('.action_btn[data-action="fold"]').removeClass('hide');
     } else {
-        // none gitlab page
-        $actionPanel.find('.action_btn[data-action="fold"]').remove();
+        // none gitlab site
+        $actionPanel.find('.action_btn[data-action="switch"]').removeClass('hide');
     }
 }
 
-const db = {};
 const parseRisonURL = (maiPageLocation) => {
     try {
         const queriesRison = getUrlParameter(maiPageLocation, 'queries');
@@ -107,24 +154,18 @@ const parseRisonURL = (maiPageLocation) => {
             throw Error('No valid queries Rison params in URL');
         }
         const queryJSON = rison.decode(queriesRison);
-        db['query-json'] = queryJSON;
-        $copyJSONBtn.show().html(`Copy JSON`);
-        $copyJSONBtn.removeAttr('disabled');
+        DATA_STATUS['query-json'] = queryJSON;
+        $copyJSONBtn
+            .removeClass('hide')
+            .html(`Copy JSON`)
+            .removeAttr('disabled');
     } catch (err) {
         console.error(err);
-        $copyJSONBtn.hide();
+        $copyJSONBtn.addClass('hide');
     }
 }
 
-const staticAction = {
-    copyJSON: (evt) => {
-        const queryJSON = db['query-json'];
-        copyToClipboard(JSON.stringify(queryJSON, null, '    '));
-        tip('JSON Copied!', 900, false);
-    }
-}
-
-
+// Bind UI Events ===============================
 $actionPanel.on('click', '.action_btn' ,function(evt){
     evt.preventDefault()
     evt.stopPropagation()
@@ -162,27 +203,15 @@ $actionPanel.on('click', '.static_action_btn' ,function(evt){
 });
 
 
-const sendActionToMainPage = (action, cb) => {
-    sendMessage(
-        {
-            status: "success", 
-            source: 'popup.js',
-            action: action,
-        }, 
-        function(res) {
-            cb && cb(res);
-        }
-    );
-}
-
-const initMainPageAction = ()=> {
-    sendActionToMainPage('copy');
-    sendActionToMainPage('sync')
-}
-
+// Init Plugin ===============================
 const initUI = () => {
     $cakeTitle.html(titleText);
-}
+};
+
+const initMainPageAction = ()=> {
+    sendActionToMainPage('copyURL');
+    sendActionToMainPage('sync')
+};
 
 $(() => {
     initUI();

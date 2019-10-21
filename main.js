@@ -4,7 +4,6 @@
 const DEBUG = false;
 
 // utils =================
-
 const runAsync = (fn, delay) => {
     setTimeout(fn, delay || 50);
 
@@ -12,19 +11,6 @@ const runAsync = (fn, delay) => {
         then: runAsync,
     };
 };
-
-function parseQuerystring(urlStr) {
-    var url = urlStr || location.search;
-    var queryObj = {};
-    if (url.indexOf("?") != -1) {
-        var str = url.substr(1);
-        strs = str.split("&");
-        for(var i = 0; i < strs.length; i ++) {
-            queryObj[strs[i].split("=")[0]] = unescape(strs[i].split("=")[1]);
-        }
-    }
-    return queryObj;
-}
 
 function getRandomNumber(start,end,n){
     var arr=[];
@@ -110,8 +96,8 @@ const actionMessageMap = {
     fold: (req, type) => {
         foldFiles(type);
     },
-    copy: (req) => {
-        sendAction('copy', location.href);
+    copyURL: (req) => {
+        sendAction('copyURL', location.href);
       
     },
     sync: (req)=> {
