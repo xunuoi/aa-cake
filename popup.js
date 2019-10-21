@@ -91,12 +91,19 @@ const detectHost = (maiPageLocation) => {
 
 const db = {};
 const parseRisonURL = (maiPageLocation) => {
-    const queryRison = getUrlParameter(maiPageLocation, 'queries') || '()';
-    const queryJSON = rison.decode(queryRison);
-    db['query-json'] = queryJSON;
-    
-    $copyJSONBtn.html(`Copy JSON`);
-    $copyJSONBtn.removeAttr('disabled');
+    try {
+        const queriesRison = getUrlParameter(maiPageLocation, 'queries');
+        if (!queriesRison) {
+            throw Error('No valid queries Rison params in URL');
+        }
+        const queryJSON = rison.decode(queriesRison);
+        db['query-json'] = queryJSON;
+        $copyJSONBtn.show().html(`Copy JSON`);
+        $copyJSONBtn.removeAttr('disabled');
+    } catch (err) {
+        console.error(err);
+        $copyJSONBtn.hide();
+    }
 }
 
 const staticAction = {
