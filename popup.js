@@ -62,7 +62,7 @@ const actionMap = {
         }, 5500);
     },
     sync: (mainPageLocation) => {
-        detectHost(mainPageLocation);
+        detectMainPageHost(mainPageLocation);
         parseRisonURL(mainPageLocation)
     }
 
@@ -76,7 +76,7 @@ function tip(txt, time, shouldClose) {
     }, time || 1200);
 }
 
-const detectHost = (maiPageLocation) => {
+const detectMainPageHost = (maiPageLocation) => {
     let targetHost = 'localhost';
     let targetHostName = 'localhost';
     if (maiPageLocation.host.match('localhost')) {
@@ -87,6 +87,16 @@ const detectHost = (maiPageLocation) => {
     $hostBtn.html(`To ${targetHostName}`);
     $hostBtn.data('type', targetHost);
     $hostBtn.removeAttr('disabled');
+
+    // For gitlab
+    if (maiPageLocation.href.match(/git\.appannie/)) {
+        // gitlab page
+        $actionPanel.find('.action_btn[data-action="switch"]').remove();
+        $actionPanel.find('.action_btn[data-action="clean"]').remove();
+    } else {
+        // none gitlab page
+        $actionPanel.find('.action_btn[data-action="fold"]').remove();
+    }
 }
 
 const db = {};

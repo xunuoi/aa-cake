@@ -118,7 +118,7 @@ const actionMessageMap = {
         sendAction('sync', location);
     },
     switch: (req, type) => {
-        const newHostURL = `${location.protocol}//${type}${location.pathname}`;
+        const newHostURL = `${location.protocol}//${type}${location.pathname}${location.search}${location.hash}`;
         window.open(newHostURL);
     },
 }
