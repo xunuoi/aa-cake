@@ -119,7 +119,7 @@ const parseRisonURL = (maiPageLocation) => {
 const staticAction = {
     copyJSON: (evt) => {
         const queryJSON = db['query-json'];
-        copyToClipboard(JSON.stringify(queryJSON));
+        copyToClipboard(JSON.stringify(queryJSON, null, '    '));
         tip('JSON Copied!', 900, false);
     }
 }
