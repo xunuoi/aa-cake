@@ -67,6 +67,7 @@ const actionQueueExecutor = (() => {
 
         if (isReady === true) {
             while (ACTION_QUEUE.length) {
+                console.log(ACTION_QUEUE);
                 ACTION_QUEUE.shift()();
             }
             
@@ -86,7 +87,7 @@ const actionQueueExecutor = (() => {
 
 function sendMessage(data, cb){
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-
+        console.log('tabs: ', tabs);
         actionQueueExecutor(isTabsComplete(tabs), () => chrome.tabs.sendMessage(tabs[0].id, data, cb));
        
     });
@@ -113,7 +114,7 @@ const clearInitialClosePopoverTimeoutId = () => {
 }
 
 const closePopover = () => {
-    window.close();
+    // window.close();
 }
 
 // Show tip
@@ -222,7 +223,9 @@ $actionPanel.on('click', '.action_btn' ,function(evt){
     );
 });
 
+
 $actionPanel.on('click', '.static_action_btn' ,function(evt){
+
     evt.preventDefault()
     evt.stopPropagation()
     var $btn = $(this);

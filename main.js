@@ -40,14 +40,38 @@ function appendCSSStyle(css) {
     }
 }
 
+
+// TODO: Fix this
 function fixJiraLinkRedirection() {
-    // TODO: Fix this
     // if (location.href.match('appannie.atlassian.net')) {
     //     // $('#ghx-work').remove();
     //     $('#ghx-work').on('click', '#ghx-column-header-group', function(evt){
     //         alert(evt);
     //     })
     // }
+}
+
+function getUrlParameter(maiPageLocation, name) {
+    name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+    var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+    var results = regex.exec(maiPageLocation.search);
+    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+};
+
+const getQueryJSON = () => {
+    let queryJSON;
+    try {
+        const queriesRison = getUrlParameter(location, 'queries');
+        if (!queriesRison) {
+            throw Error('No valid queries Rison params in URL');
+        }
+        queryJSON = rison.decode(queriesRison);
+  
+    } catch (err) {
+        console.error(err);
+    }
+
+    return queryJSON;
 }
 
 // =======message===
@@ -89,6 +113,8 @@ const sendAction = (action, data, cb) => {
         );;
 }
 
+// Business ===========
+
 const actionMessageMap = {
     clean: (req) => {
         cleanAndReload();
@@ -107,6 +133,9 @@ const actionMessageMap = {
         const newHostURL = `${location.protocol}//${type}${location.pathname}${location.search}${location.hash}`;
         window.open(newHostURL);
     },
+    fullScreen: (req, type)  => {
+        setupJSONEditor();
+    }
 }
 
 // business =======
@@ -138,6 +167,61 @@ function foldFiles(type) {
     });
 }
 
+
+const setupJSONEditor = () => {
+    $(() => {
+        if (!$('#aa_cake_jsoneditor_panel').length) {
+            $(document.body).append(`
+                <div id="aa_cake_jsoneditor_panel" style="padding: 0 0 40px 0; margin:0 auto;">
+                    <div id="aa_cake_jsoneditor" style="width: 100%; height: 100%;"></div>
+
+                    <button class="aa_cake_action" data-action="aqlexplorer">Apply Now</button>
+                    <button class="aa_cake_action" data-action="apply">Open in AQL Explorer</button>
+                </div>
+            `);
+        }
+
+        // $('#aa_cake_jsoneditor_panel').get(0).requestFullscreen();
+
+        const jsonContent = getQueryJSON();
+
+        var container = document.getElementById("aa_cake_jsoneditor");
+        var options = {
+            mode: 'code'
+        };
+        var editor = new JSONEditor(container, options);
+        editor.set(jsonContent);
+
+
+        $('#aa_cake_jsoneditor_panel').on('click', '.aa_cake_action', function(evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
+
+            const $btn = $(this);
+            const action = $btn.data('action');
+            const updatedJSON = editor.get();
+            const updatedRison = rison.encode(updatedJSON);
+            const btnName = $btn.text();
+
+            if (btnName === 'Open in AQL Explorer') {
+                window.open(`/labs/projects/aql-explorer?queries=(aql_explorer:${updatedRison})`)
+
+            } else if (btnName === 'Apply Now') {
+                location.search = `?queries=${updatedRison}`;
+            }
+
+            // if (editor) {
+            //     editor.destroy();
+            //     $('#aa_cake_jsoneditor_panel').remove();
+            //     editor = null;
+            // }
+        });
+
+    });
+}
+
+
+// init =========================
 function initScript() {
     appendCSSStyle('div[class*="FeedbackWidget__"] { display: none; }');
     fixJiraLinkRedirection();
