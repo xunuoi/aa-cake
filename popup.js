@@ -113,7 +113,7 @@ const clearInitialClosePopoverTimeoutId = () => {
 }
 
 const closePopover = () => {
-    // window.close();
+    window.close();
 }
 
 // Show tip
