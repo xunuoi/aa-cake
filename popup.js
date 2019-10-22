@@ -154,7 +154,7 @@ const staticAction = {
     copyJSON: (evt) => {
         const queryJSON = DATA_STATUS['query-json'];
         copyToClipboard(JSON.stringify(queryJSON, null, '    '));
-        tip('JSON Copied', 1000, false);
+        tip('JSON Copied', 1000);
     }
 }
 
