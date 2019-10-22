@@ -6,7 +6,7 @@ const $hostBtn = $('#action-panel .action_btn[data-action="switch"]');
 const $copyJSONBtn = $('#action-panel .static_action_btn[data-action="copyJSON"]');
 const $cakeTitle = $('#cake-title');
 const $loading = $('#loading_icon');
-const titleText = 'AA Cake';
+const TITLE_TEXT = 'AA Cake';
 
 const DATA_STATUS = {};
 
@@ -53,9 +53,42 @@ chrome.runtime.onMessage.addListener(function(req, sender, sendRes) {
     } 
 });
 
+const isTabsComplete = (tabs) => tabs.every(tab => tab.status === 'complete');
+
+const actionQueueExecutor = (() => {
+    const ACTION_QUEUE = [];
+
+    return (isReady, action) => {
+        action && ACTION_QUEUE.push(action);
+        
+        if (!ACTION_QUEUE.length) {
+            return;
+        }
+
+        if (isReady === true) {
+            while (ACTION_QUEUE.length) {
+                ACTION_QUEUE.shift()();
+            }
+            
+            $cakeTitle.removeClass('highlight').html(TITLE_TEXT);
+
+        } else {
+            $cakeTitle.addClass('highlight').html('Loading...');
+            window.requestAnimationFrame(() => {
+                chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+                    actionQueueExecutor(isTabsComplete(tabs));
+                
+                });
+            });
+        }
+    }
+})();
+
 function sendMessage(data, cb){
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-        chrome.tabs.sendMessage(tabs[0].id, data, cb);
+
+        actionQueueExecutor(isTabsComplete(tabs), () => chrome.tabs.sendMessage(tabs[0].id, data, cb));
+       
     });
 }
 
@@ -89,7 +122,7 @@ const tip = (txt, time, shouldClose) => {
     clearInitialClosePopoverTimeoutId();
 
     setTimeout(() => {
-        $cakeTitle.removeClass('highlight').html(titleText);
+        $cakeTitle.removeClass('highlight').html(TITLE_TEXT);
         shouldClose != false && closePopover();
     }, time || 1200);
 }
@@ -205,7 +238,7 @@ $actionPanel.on('click', '.static_action_btn' ,function(evt){
 
 // Init Plugin ===============================
 const initUI = () => {
-    $cakeTitle.html(titleText);
+    $cakeTitle.html(TITLE_TEXT);
 };
 
 const initMainPageAction = ()=> {
