@@ -1,6 +1,6 @@
 {  
   "name": "AA-Cake",  
-  "version": "0.1.0",
+  "version": "0.1.1",
   "manifest_version": 2,
   "description": "Add a little sweetness to your work",
   "browser_action": {  
