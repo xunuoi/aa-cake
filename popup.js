@@ -68,7 +68,6 @@ const actionQueueExecutor = (() => {
 
         if (isReady === true) {
             while (ACTION_QUEUE.length) {
-                console.log(ACTION_QUEUE);
                 ACTION_QUEUE.shift()();
             }
             
@@ -88,7 +87,6 @@ const actionQueueExecutor = (() => {
 
 function sendMessage(data, cb){
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-        console.log('tabs: ', tabs);
         actionQueueExecutor(isTabsComplete(tabs), () => chrome.tabs.sendMessage(tabs[0].id, data, cb));
        
     });
@@ -170,7 +168,6 @@ const detectMainPageHost = (maiPageLocation) => {
 
     $hostBtn.html(`To ${targetHostName}`);
     $hostBtn.data('type', targetHost);
-    $hostBtn.removeAttr('disabled');
 
     // Show different actions for different sites
     if (maiPageLocation.href.match(/git\.appannie/)) {

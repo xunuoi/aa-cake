@@ -25,9 +25,12 @@ function getRandomNumber(start,end,n){
     return arr;
 }
 
-function appendCSSStyle(css) {
+function appendCSSStyle(css, cssId) {
     head = document.head || document.getElementsByTagName('head')[0],
     style = document.createElement('style');
+    if (cssId) {
+        style.id = cssId;
+    }
 
     head.appendChild(style);
 
@@ -38,6 +41,8 @@ function appendCSSStyle(css) {
     } else {
       style.appendChild(document.createTextNode(css));
     }
+
+    return style;
 }
 
 
@@ -244,9 +249,11 @@ const showJSONEditor = () => {
         <div id="aa_cake_jsoneditor_mask"></div>;
     `;
 
+    let editorCSSStyle;
+
     const initEditor = () => {
         if (!$('#aa_cake_jsoneditor_panel').length) {
-            appendCSSStyle(EDITOR_CSS_STYLE);
+            editorCSSStyle = appendCSSStyle(EDITOR_CSS_STYLE);
             $(document.body).append(EDITOR_MASK_LAYOUT);
             $(document.body).append(EDITOR_LAYOUT);
         }
@@ -261,6 +268,7 @@ const showJSONEditor = () => {
     const destroyEditor = () => {
         $('#aa_cake_jsoneditor_panel').off('click').remove();
         $('#aa_cake_jsoneditor_mask').remove();
+        $(editorCSSStyle).remove();
     };
 
     const getEditorContent = ($editor) => {
