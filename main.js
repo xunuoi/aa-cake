@@ -58,7 +58,7 @@ function getUrlParameter(maiPageLocation, name) {
     return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 };
 
-const getQueryJSON = () => {
+const getQueryJSONFromURL = () => {
     let queryJSON;
     try {
         const queriesRison = getUrlParameter(location, 'queries');
@@ -133,8 +133,8 @@ const actionMessageMap = {
         const newHostURL = `${location.protocol}//${type}${location.pathname}${location.search}${location.hash}`;
         window.open(newHostURL);
     },
-    fullScreen: (req, type)  => {
-        setupJSONEditor();
+    editQuery: (req, type)  => {
+        showJSONEditor();
     }
 }
 
@@ -168,55 +168,174 @@ function foldFiles(type) {
 }
 
 
-const setupJSONEditor = () => {
-    $(() => {
-        if (!$('#aa_cake_jsoneditor_panel').length) {
-            $(document.body).append(`
-                <div id="aa_cake_jsoneditor_panel" style="padding: 0 0 40px 0; margin:0 auto;">
-                    <div id="aa_cake_jsoneditor" style="width: 100%; height: 100%;"></div>
+const showJSONEditor = () => {
+    const EDITOR_CSS_STYLE = `
+        #aa_cake_jsoneditor_mask {
+            position:fixed;
+            width: 100%;
+            height: 100%;
+            z-index: 9996;
+            background-color: #0c0a1da6;
 
-                    <button class="aa_cake_action" data-action="aqlexplorer">Apply Now</button>
-                    <button class="aa_cake_action" data-action="apply">Open in AQL Explorer</button>
-                </div>
-            `);
+            top: 0;
+            left: 0;
         }
 
-        // $('#aa_cake_jsoneditor_panel').get(0).requestFullscreen();
+        #aa_cake_jsoneditor_panel {
+            width: 600px;
+            min-height: 640px;
+            padding: 0 0 40px 0;
+            box-shadow: 4px 4px #070b25b8;
+            background: #2e134a94;
+            box-sizing: border-box;
 
-        const jsonContent = getQueryJSON();
+            font-size: 13px;
 
-        var container = document.getElementById("aa_cake_jsoneditor");
-        var options = {
-            mode: 'code'
-        };
-        var editor = new JSONEditor(container, options);
-        editor.set(jsonContent);
+            position:fixed;
+            top:50%;
+            left:50%;
+            margin-top: -380px;
+            margin-left: -300px;
+            z-index: 9999;
+            
+        }
 
+        .aa_cake_json_editor_header {
+            width: 100%;
+            text-align: center;
+            padding: 4px;
+        }
 
-        $('#aa_cake_jsoneditor_panel').on('click', '.aa_cake_action', function(evt) {
+        #aa_cake_jsoneditor {
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 540px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .aa_cake_json_editor_menus {
+            width: 100%;
+            text-align: center;
+            padding: 8px 10px;
+            font-size: 16px;
+        }
+        .aa_cake_json_editor_menus button {
+            cursor: pointer;
+        }
+    `;
+
+    const EDITOR_LAYOUT = `
+        <div id="aa_cake_jsoneditor_panel">
+            <div class="aa_cake_json_editor_header">Query JSON</div>
+            <textarea id="aa_cake_jsoneditor"></textarea>
+
+            <div class="aa_cake_json_editor_menus">
+                <button class="aa_cake_action toggle_fullscreen" data-action="fullScreen">Full Screen</button>
+                <button class="aa_cake_action" data-action="copy">Copy</button>
+                <button class="aa_cake_action" data-action="apply">Apply Now</button>
+                <button class="aa_cake_action" data-action="aqlexplorer">Open in AQL Explorer</button>
+                <button class="aa_cake_action" data-action="close">Close</button>
+            </div>
+        </div>
+    `;
+
+    const EDITOR_MASK_LAYOUT = `
+        <div id="aa_cake_jsoneditor_mask"></div>;
+    `;
+
+    const initEditor = () => {
+        if (!$('#aa_cake_jsoneditor_panel').length) {
+            appendCSSStyle(EDITOR_CSS_STYLE);
+            $(document.body).append(EDITOR_MASK_LAYOUT);
+            $(document.body).append(EDITOR_LAYOUT);
+        }
+
+        const jsonContent = getQueryJSONFromURL();
+        const $editor = $('#aa_cake_jsoneditor');
+        $editor.val(JSON.stringify(jsonContent, null, 4));
+
+        return $editor;
+    }
+
+    const destroyEditor = () => {
+        $('#aa_cake_jsoneditor_panel').off('click').remove();
+        $('#aa_cake_jsoneditor_mask').remove();
+    };
+
+    const getEditorContent = ($editor) => {
+        return $editor.val();
+    }
+
+    const bindEditorEvent = ($editor) => {
+        $('#aa_cake_jsoneditor_panel .aa_cake_json_editor_menus').on('click', '.aa_cake_action', function(evt) {
             evt.preventDefault();
             evt.stopPropagation();
 
             const $btn = $(this);
-            const action = $btn.data('action');
-            const updatedJSON = editor.get();
-            const updatedRison = rison.encode(updatedJSON);
-            const btnName = $btn.text();
+            const action = $btn.attr('data-action');
+            const updatedEditorContent = getEditorContent($editor);
 
-            if (btnName === 'Open in AQL Explorer') {
-                window.open(`/labs/projects/aql-explorer?queries=(aql_explorer:${updatedRison})`)
+            let jsonData;
+            let minifiedJSONString;
+            let formatedJSONString;
+            let updatedRisonString;
 
-            } else if (btnName === 'Apply Now') {
-                location.search = `?queries=${updatedRison}`;
+            try {
+                jsonData = JSON.parse(updatedEditorContent);
+                minifiedJSONString = JSON.stringify(jsonData);
+                formatedJSONString = JSON.stringify(jsonData, null, 4);
+                updatedRisonString = rison.encode(jsonData);
+
+            } catch(error) {
+                console.log(error);
+                alert(`Content Error: \n\n ${error},\n\n Please check and try again.`);
+                
+                return false;
             }
 
-            // if (editor) {
-            //     editor.destroy();
-            //     $('#aa_cake_jsoneditor_panel').remove();
-            //     editor = null;
-            // }
-        });
+            if (action === 'aqlexplorer') {
+                window.open(`/labs/projects/aql-explorer?queries=(aql_explorer:${updatedRisonString})`)
 
+            } else if (action === 'apply') {
+
+                location.search = `?queries=${updatedRisonString}`;
+
+            } else if(action === 'copy') {
+
+                copyToClipboard(updatedEditorContent);
+
+            } else if(action === 'fullScreen') {
+                $editor.height('90%');
+
+                $('#aa_cake_jsoneditor_panel').get(0)
+                    .requestFullscreen();
+
+                $btn.text('Exit Full Screen');
+                $btn.attr('data-action', 'exitFullScreen');
+
+                
+            } else if(action === 'exitFullScreen') {
+                $editor.height('normal');
+
+                document.exitFullscreen();
+                $btn.text('Full Screen');
+                $btn.attr('data-action', 'fullScreen');
+
+            } else if (action === 'close') {
+
+                destroyEditor();
+
+            }
+
+        });
+    }
+
+
+    // Init editor
+    $(() => {
+        const $editor = initEditor() 
+        bindEditorEvent($editor);
     });
 }
 

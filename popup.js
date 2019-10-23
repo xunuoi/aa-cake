@@ -4,6 +4,7 @@ const $actionPanel = $('#action-panel');
 const $clearBtn = $('#clear_btn');
 const $hostBtn = $('#action-panel .action_btn[data-action="switch"]');
 const $copyJSONBtn = $('#action-panel .static_action_btn[data-action="copyJSON"]');
+const $editQueryBtn = $('#action-panel .action_btn[data-action="editQuery"]');
 const $cakeTitle = $('#cake-title');
 const $loading = $('#loading_icon');
 const TITLE_TEXT = 'AA Cake';
@@ -114,7 +115,7 @@ const clearInitialClosePopoverTimeoutId = () => {
 }
 
 const closePopover = () => {
-    // window.close();
+    window.close();
 }
 
 // Show tip
@@ -125,7 +126,7 @@ const tip = (txt, time, shouldClose) => {
     setTimeout(() => {
         $cakeTitle.removeClass('highlight').html(TITLE_TEXT);
         shouldClose != false && closePopover();
-    }, time || 1200);
+    }, time || 1100);
 }
 
 // Business ===============================
@@ -178,6 +179,8 @@ const detectMainPageHost = (maiPageLocation) => {
     } else {
         // none gitlab site
         $actionPanel.find('.action_btn[data-action="switch"]').removeClass('hide');
+        // edit query button
+        $actionPanel.find('.action_btn[data-action="editQuery"]').removeClass('hide');
     }
 }
 
@@ -189,13 +192,13 @@ const parseRisonURL = (maiPageLocation) => {
         }
         const queryJSON = rison.decode(queriesRison);
         DATA_STATUS['query-json'] = queryJSON;
-        $copyJSONBtn
-            .removeClass('hide')
-            .html(`Copy JSON`)
-            .removeAttr('disabled');
+        $copyJSONBtn.removeClass('hide')
+
+        $editQueryBtn.removeClass('hide')
     } catch (err) {
         console.error(err);
         $copyJSONBtn.addClass('hide');
+        $editQueryBtn.addClass('hide');
     }
 }
 
