@@ -174,6 +174,16 @@ function foldFiles(type) {
 
 
 const showJSONEditor = () => {
+
+    let editorPanelWidth = 600;
+    let editorPanelHeight = 640;
+    let editorHeight = 540;
+
+    if (window.innerHeight <= 640) {
+        editorPanelHeight = window.innerHeight * 0.86;
+        editorHeight = editorPanelHeight - 80;
+    }
+
     const EDITOR_CSS_STYLE = `
         #aa_cake_jsoneditor_mask {
             position:fixed;
@@ -187,8 +197,8 @@ const showJSONEditor = () => {
         }
 
         #aa_cake_jsoneditor_panel {
-            width: 600px;
-            min-height: 640px;
+            width: ${editorPanelWidth}px;
+            min-height: ${editorPanelHeight}px;
             padding: 0 0 40px 0;
             box-shadow: 4px 4px #070b25b8;
             background: #2e134a94;
@@ -199,8 +209,8 @@ const showJSONEditor = () => {
             position:fixed;
             top:50%;
             left:50%;
-            margin-top: -380px;
-            margin-left: -300px;
+            margin-top: -${editorPanelHeight/2 + 10}px;
+            margin-left: -${editorPanelWidth/2}px;
             z-index: 9999;
             
         }
@@ -214,7 +224,7 @@ const showJSONEditor = () => {
         #aa_cake_jsoneditor {
             box-sizing: border-box;
             width: 100%;
-            min-height: 540px;
+            min-height: ${editorHeight}px;
             outline: none;
             font-size: 14px;
         }
