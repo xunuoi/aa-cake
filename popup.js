@@ -5,6 +5,7 @@ const $clearBtn = $('#clear_btn');
 const $hostBtn = $('#action-panel .action_btn[data-action="switch"]');
 const $copyJSONBtn = $('#action-panel .static_action_btn[data-action="copyJSON"]');
 const $editQueryBtn = $('#action-panel .action_btn[data-action="editQuery"]');
+const $debugQueryBtn = $('#action-panel .action_btn[data-action="debugQuery"]');
 const $cakeTitle = $('#cake-title');
 const $loading = $('#loading_icon');
 const TITLE_TEXT = 'AA Cake';
@@ -92,12 +93,13 @@ function sendMessage(data, cb){
     });
 }
 
-const sendActionToMainPage = (action, cb) => {
+const sendActionToMainPage = (action, type, cb) => {
     sendMessage(
         {
             status: "success", 
             source: 'popup.js',
             action: action,
+            type: type,
         }, 
         function(res) {
             cb && cb(res);
@@ -130,6 +132,7 @@ const tip = (txt, time, shouldClose) => {
 // Business ===============================
 
 // For Popover Page Async Action
+// The action send from Main Page
 const actionMap = {
     copyURL: (txt) => {
         copyToClipboard(txt);
@@ -144,6 +147,11 @@ const actionMap = {
         parseRisonURL(mainPageLocation);
 
         $loading.remove();
+    },
+    mainPageScrollTo: (data) => {
+        sendActionToMainPage('scrollTo', data, (res) => {
+            tip('Check your page');
+        });
     }
 
 }
@@ -184,18 +192,21 @@ const detectMainPageHost = (maiPageLocation) => {
 const parseRisonURL = (maiPageLocation) => {
     try {
         const queriesRison = getUrlParameter(maiPageLocation, 'queries');
+        const isDebug = getUrlParameter(maiPageLocation, 'queries');
+
         if (!queriesRison) {
             throw Error('No valid queries Rison params in URL');
         }
         const queryJSON = rison.decode(queriesRison);
         DATA_STATUS['query-json'] = queryJSON;
         $copyJSONBtn.removeClass('hide')
-
         $editQueryBtn.removeClass('hide')
+        $debugQueryBtn.removeClass('hide')
     } catch (err) {
         console.error(err);
         $copyJSONBtn.addClass('hide');
         $editQueryBtn.addClass('hide');
+        $debugQueryBtn.addClass('hide')
     }
 }
 
@@ -209,6 +220,10 @@ $actionPanel.on('click', '.action_btn' ,function(evt){
     }
     var action = $btn.data('action');
     var type = $btn.data('type');
+    var notClose = $btn.attr('noclose');
+    if (notClose) {
+        clearInitialClosePopoverTimeoutId();
+    }
 
     sendMessage(
         {
@@ -218,7 +233,7 @@ $actionPanel.on('click', '.action_btn' ,function(evt){
             type: type,
         }, 
         function(res) {
-            tip('OK!');
+            !notClose && tip('OK!');
         }
     );
 });

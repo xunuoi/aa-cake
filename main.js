@@ -118,6 +118,11 @@ const sendAction = (action, data, cb) => {
         );;
 }
 
+const scrollPageTo = (position) => {
+    document.body.scrollTop = position || 0;
+    document.documentElement.scrollTop = position || 0;
+}
+
 // Business ===========
 
 const actionMessageMap = {
@@ -138,8 +143,31 @@ const actionMessageMap = {
         const newHostURL = `${location.protocol}//${type}${location.pathname}${location.search}${location.hash}`;
         window.open(newHostURL);
     },
-    editQuery: (req, type)  => {
+    editQuery: (req, type) => {
         showJSONEditor();
+    },
+    debugQuery: (req, type) => {
+        const isDebug = getUrlParameter(location, 'debug');
+        if (isDebug) {
+            const queryRison = getUrlParameter(location, 'queries');
+            location.search = `?queries=${queryRison}`;
+
+            // Scroll to top when new page load finished
+            sendAction('mainPageScrollTo', 0);
+
+        } else {
+             if (location.search) {
+                location.search += '&debug=1'
+            } else {
+                location.search = '?debug=1';
+            }
+            // Scroll to bottom when new page load finished
+            sendAction('mainPageScrollTo', 99999);
+        }
+
+    },
+    scrollTo: (req, type) => {
+        scrollPageTo(parseInt(type));
     }
 }
 
