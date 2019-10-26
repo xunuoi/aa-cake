@@ -63,10 +63,14 @@ function getUrlParameter(maiPageLocation, name) {
     return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 };
 
-const getQueryJSONFromURL = () => {
+const getQueryJSONFromURL = (searchString) => {
+    const pageLocation = {
+        search: searchString || location.search,
+    };
+
     let queryJSON;
     try {
-        const queriesRison = getUrlParameter(location, 'queries');
+        const queriesRison = getUrlParameter(pageLocation, 'queries');
         if (!queriesRison) {
             throw Error('No valid queries Rison params in URL');
         }
@@ -200,8 +204,76 @@ function foldFiles(type) {
     });
 }
 
+const isGoogleDocs = location.host.match('docs.google.com');
 
-const showJSONEditor = () => {
+const initAQLDetector = () => {
+    // Only enable for google docs;
+    if (!isGoogleDocs) {
+        return false;
+    }
+
+    $('.kix-zoomdocumentplugin-inner').on('click', (evt) => {
+        const $tar = $(evt.target);
+        if ($tar.hasClass('kix-lineview-text-block')) {
+            const $a = $tar.find('a');
+            if ($a.length) {
+                const linkURL = $a.attr('href');
+                const searchPos = linkURL.indexOf('?');
+                const searchString = linkURL.slice(searchPos);
+                const hasAQL = (searchPos !== -1) && searchString.includes('queries=');
+
+
+                const $bubble = $('#docs-link-bubble');
+
+                if (!hasAQL) {
+                    if ($bubble.length) {
+                        const $aqlBtn = $bubble.find('.aa_cake_aql_btn').off('click');
+                        $aqlBtn.remove();
+                    }
+
+                    return false;
+                }
+
+                if ($bubble.find('.aa_cake_aql_btn').length) {
+                    // already appened aql button;
+                    return false;
+                }
+
+                window.requestAnimationFrame(() => {
+                    const $bubble = $('#docs-link-bubble');
+                    if ($bubble.length) {
+
+                        const $btnWrapper = $bubble.find('.link-bubble-header .docs-bubble-button').parent('span');
+
+                        const $aqlBtn = $(`
+                            <div role="button" class="goog-inline-block jfk-button jfk-button-standard docs-material docs-bubble-button aa_cake_aql_btn" tabindex="0" data-tooltip="AQL" aria-label="AQL">
+                                    <div class="docs-icon goog-inline-block ">
+                                        <div class="docs-icon-img-container docs-icon-img docs-icon-play" aria-hidden="true">&nbsp;</div>
+                                    </div>
+                            </div>`);
+
+                        $aqlBtn.on('click', evt => {
+                            evt.preventDefault();
+                            evt.stopPropagation();
+
+                            showJSONEditor(searchString);
+                        });
+
+                        $btnWrapper.append($aqlBtn);
+
+                    }
+                })
+            }
+        }
+    });
+
+    window.addEventListener('unload', function(event) {
+        $('.kix-zoomdocumentplugin-inner').off('click');
+    });
+}
+
+
+const showJSONEditor = (initialRisonSearchString) => {
 
     let editorPanelWidth = 600;
     let editorPanelHeight = 640;
@@ -296,7 +368,7 @@ const showJSONEditor = () => {
             $(document.body).append(EDITOR_LAYOUT);
         }
 
-        const jsonContent = getQueryJSONFromURL();
+        const jsonContent = getQueryJSONFromURL(initialRisonSearchString);
         const $editor = $('#aa_cake_jsoneditor');
         $editor.val(JSON.stringify(jsonContent, null, 4));
 
@@ -341,11 +413,21 @@ const showJSONEditor = () => {
             }
 
             if (action === 'aqlexplorer') {
-                window.open(`/labs/projects/aql-explorer?queries=(aql_explorer:${updatedRisonString})`)
+                let prefix = '';
+                if (isGoogleDocs) {
+                    prefix = 'https://www.appannie.com';
+                }
+                window.open(`${prefix}/labs/projects/aql-explorer?queries=(aql_explorer:${updatedRisonString})`)
 
             } else if (action === 'apply') {
+                if (isGoogleDocs) {
+                    window.open(`https://www.appannie.com/labs/projects/aql-explorer?queries=(aql_explorer:${updatedRisonString})`)
 
-                location.search = `?queries=${updatedRisonString}`;
+                } else {
+                    location.search = `?queries=${updatedRisonString}`;
+                }
+
+                
 
             } else if(action === 'copy') {
 
@@ -390,6 +472,11 @@ const showJSONEditor = () => {
 function initScript() {
     appendCSSStyle('div[class*="FeedbackWidget__"] { display: none; }');
     fixJiraLinkRedirection();
+
+    $(() => {
+        initAQLDetector();
+    })
+    
 }
 
 initScript();
