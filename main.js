@@ -206,6 +206,13 @@ function foldFiles(type) {
 
 const isGoogleDocs = location.host.match('docs.google.com');
 
+const svgIcon = `
+<svg width="18" height="18" viewBox="0, 0, 42, 32" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <g transform="translate(2.5 0)" fill="currentColor" fill-rule="evenodd" stroke="currentColor" stroke-width="1.5">
+        <path d="M13.22 0h12.634l13.22 13.318L19.537 33 0 13.318 13.22 0zm1.874 1.58l4.427 4.344 4.426-4.344h-8.853zm5.619 5.563l5.382 5.364h9.973L25.7 2.172l-4.986 4.97zm-7.36-4.97L3.006 12.506H13.02l5.34-5.334-5.008-5zm.924 11.289l5.211 15.798 5.21-15.798-5.21-5.267-5.211 5.267zm-11.271.625l14.636 14.679-4.88-14.68H3.007zm23.293 0l-4.835 14.679 14.506-14.68H26.3z" id="svg_aa_cake_aql_svg_btn"></path>
+    </g>
+</svg>
+`
 const initAQLDetector = () => {
     // Only enable for google docs;
     if (!isGoogleDocs) {
@@ -214,8 +221,10 @@ const initAQLDetector = () => {
 
     $('.kix-zoomdocumentplugin-inner').on('click', (evt) => {
         const $tar = $(evt.target);
+        
         if ($tar.hasClass('kix-lineview-text-block')) {
             const $a = $tar.find('a');
+
             if ($a.length) {
                 const linkURL = $a.attr('href');
                 const searchPos = linkURL.indexOf('?');
@@ -223,24 +232,23 @@ const initAQLDetector = () => {
                 const hasAQL = (searchPos !== -1) && searchString.includes('queries=');
 
 
-                const $bubble = $('#docs-link-bubble');
+                window.requestAnimationFrame(() => {
 
-                if (!hasAQL) {
-                    if ($bubble.length) {
+                    const $bubble = $('#docs-link-bubble');
+
+
+                    if (!hasAQL) {
+                        // if no AQL link, then remove button and return
                         const $aqlBtn = $bubble.find('.aa_cake_aql_btn').off('click');
                         $aqlBtn.remove();
+                        
+                        return false;
+                        
+                    } else if ($bubble.find('.aa_cake_aql_btn').length) {
+                         // already appened aql button;
+                        return false;
                     }
 
-                    return false;
-                }
-
-                if ($bubble.find('.aa_cake_aql_btn').length) {
-                    // already appened aql button;
-                    return false;
-                }
-
-                window.requestAnimationFrame(() => {
-                    const $bubble = $('#docs-link-bubble');
                     if ($bubble.length) {
 
                         const $btnWrapper = $bubble.find('.link-bubble-header .docs-bubble-button').parent('span');
@@ -248,7 +256,9 @@ const initAQLDetector = () => {
                         const $aqlBtn = $(`
                             <div role="button" class="goog-inline-block jfk-button jfk-button-standard docs-material docs-bubble-button aa_cake_aql_btn" tabindex="0" data-tooltip="AQL" aria-label="AQL">
                                     <div class="docs-icon goog-inline-block ">
-                                        <div class="docs-icon-img-container docs-icon-img docs-icon-play" aria-hidden="true">&nbsp;</div>
+                                        <div class="docs-icon-img-container" aria-hidden="true">
+                                        ${svgIcon}
+                                        </div>
                                     </div>
                             </div>`);
 
@@ -260,7 +270,6 @@ const initAQLDetector = () => {
                         });
 
                         $btnWrapper.append($aqlBtn);
-
                     }
                 })
             }
