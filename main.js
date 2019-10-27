@@ -219,6 +219,7 @@ const initAQLDetector = () => {
         return false;
     }
 
+
     $('.kix-zoomdocumentplugin-inner').on('click', (evt) => {
         const $tar = $(evt.target);
         
@@ -236,21 +237,20 @@ const initAQLDetector = () => {
 
                     const $bubble = $('#docs-link-bubble');
 
-
                     if (!hasAQL) {
+                        // if click target a has no AQL,
+                        // then remove existing one
+                        $bubble.find('.aa_cake_aql_btn')
+                        .off('click')
+                        .remove();
                         // if no AQL link, then remove button and return
-                        const $aqlBtn = $bubble.find('.aa_cake_aql_btn').off('click');
-                        $aqlBtn.remove();
-                        
-                        return false;
-                        
-                    } else if ($bubble.find('.aa_cake_aql_btn').length) {
-                         // already appened aql button;
                         return false;
                     }
 
-                    if ($bubble.length) {
-
+                    if (
+                        $bubble.length &&
+                        !$bubble.find('.aa_cake_aql_btn').length) 
+                    {
                         const $btnWrapper = $bubble.find('.link-bubble-header .docs-bubble-button').parent('span');
 
                         const $aqlBtn = $(`
@@ -266,7 +266,18 @@ const initAQLDetector = () => {
                             evt.preventDefault();
                             evt.stopPropagation();
 
-                            showJSONEditor(searchString);
+                            const $bubbleA = $('#docs-linkbubble-link-text');
+                            const linkURL = $bubbleA.attr('href');
+                            const searchPos = linkURL.indexOf('?');
+                            const searchString = linkURL.slice(searchPos);
+                            const hasAQL = (searchPos !== -1) && searchString.includes('queries=');
+
+                            if (hasAQL) {
+                                showJSONEditor(searchString);
+                            } else {
+                                $aqlBtn.off('click').remove();
+                            }
+                            
                         });
 
                         $btnWrapper.append($aqlBtn);
