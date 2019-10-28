@@ -46,16 +46,6 @@ function appendCSSStyle(css, cssId) {
 }
 
 
-// TODO: Fix this
-function fixJiraLinkRedirection() {
-    // if (location.href.match('appannie.atlassian.net')) {
-    //     // $('#ghx-work').remove();
-    //     $('#ghx-work').on('click', '#ghx-column-header-group', function(evt){
-    //         alert(evt);
-    //     })
-    // }
-}
-
 function getUrlParameter(maiPageLocation, name) {
     name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
     var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
@@ -176,6 +166,7 @@ const actionMessageMap = {
 }
 
 // business =======
+const isGoogleDocs = location.host.match('docs.google.com');
 
 function cleanAndReload() {
     localStorage.clear();
@@ -204,16 +195,15 @@ function foldFiles(type) {
     });
 }
 
-const isGoogleDocs = location.host.match('docs.google.com');
-
-const svgIcon = `
-<svg width="18" height="18" viewBox="0, 0, 42, 32" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <g transform="translate(2.5 0)" fill="currentColor" fill-rule="evenodd" stroke="currentColor" stroke-width="1.5">
-        <path d="M13.22 0h12.634l13.22 13.318L19.537 33 0 13.318 13.22 0zm1.874 1.58l4.427 4.344 4.426-4.344h-8.853zm5.619 5.563l5.382 5.364h9.973L25.7 2.172l-4.986 4.97zm-7.36-4.97L3.006 12.506H13.02l5.34-5.334-5.008-5zm.924 11.289l5.211 15.798 5.21-15.798-5.21-5.267-5.211 5.267zm-11.271.625l14.636 14.679-4.88-14.68H3.007zm23.293 0l-4.835 14.679 14.506-14.68H26.3z" id="svg_aa_cake_aql_svg_btn"></path>
-    </g>
-</svg>
-`
 const initAQLDetector = () => {
+    const svgIcon = `
+        <svg width="18" height="18" viewBox="0, 0, 42, 32" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+            <g transform="translate(2.5 0)" fill="currentColor" fill-rule="evenodd" stroke="currentColor" stroke-width="1.5">
+                <path d="M13.22 0h12.634l13.22 13.318L19.537 33 0 13.318 13.22 0zm1.874 1.58l4.427 4.344 4.426-4.344h-8.853zm5.619 5.563l5.382 5.364h9.973L25.7 2.172l-4.986 4.97zm-7.36-4.97L3.006 12.506H13.02l5.34-5.334-5.008-5zm.924 11.289l5.211 15.798 5.21-15.798-5.21-5.267-5.211 5.267zm-11.271.625l14.636 14.679-4.88-14.68H3.007zm23.293 0l-4.835 14.679 14.506-14.68H26.3z" id="svg_aa_cake_aql_svg_btn"></path>
+            </g>
+        </svg>
+    `
+
     // Only enable for google docs;
     if (!isGoogleDocs) {
         return false;
@@ -273,7 +263,7 @@ const initAQLDetector = () => {
                             const hasAQL = (searchPos !== -1) && searchString.includes('queries=');
 
                             if (hasAQL) {
-                                showJSONEditor(searchString);
+                                showJSONEditor(linkURL, searchString);
                             } else {
                                 $aqlBtn.off('click').remove();
                             }
@@ -293,7 +283,7 @@ const initAQLDetector = () => {
 }
 
 
-const showJSONEditor = (initialRisonSearchString) => {
+const showJSONEditor = (initialLinkURL, initialRisonSearchString) => {
 
     let editorPanelWidth = 600;
     let editorPanelHeight = 640;
@@ -366,10 +356,11 @@ const showJSONEditor = (initialRisonSearchString) => {
             <textarea id="aa_cake_jsoneditor"></textarea>
 
             <div class="aa_cake_json_editor_menus">
-                <button class="aa_cake_action toggle_fullscreen" data-action="fullScreen">Full Screen</button>
+                <button class="aa_cake_action" data-action="copyURL">Copy URL</button>
                 <button class="aa_cake_action" data-action="copy">Copy</button>
-                <button class="aa_cake_action" data-action="apply">Apply Now</button>
+                <button class="aa_cake_action" data-action="apply">Apply</button>
                 <button class="aa_cake_action" data-action="aqlexplorer">Open in AQL Explorer</button>
+                <button class="aa_cake_action toggle_fullscreen" data-action="fullScreen">Full Screen</button>
                 <button class="aa_cake_action" data-action="close">Close</button>
             </div>
         </div>
@@ -389,8 +380,13 @@ const showJSONEditor = (initialRisonSearchString) => {
         }
 
         const jsonContent = getQueryJSONFromURL(initialRisonSearchString);
-        const $editor = $('#aa_cake_jsoneditor');
+        const $editor = $('#aa_cake_jsoneditor').focus();
         $editor.val(JSON.stringify(jsonContent, null, 4));
+
+        if (isGoogleDocs) {
+            // hide apply button
+            $('#aa_cake_jsoneditor_panel .aa_cake_action[data-action="apply"]').remove();
+        }
 
         return $editor;
     }
@@ -432,6 +428,10 @@ const showJSONEditor = (initialRisonSearchString) => {
                 return false;
             }
 
+            const newURLBase = initialLinkURL.slice(0, initialLinkURL.indexOf('?'));
+            const newURL = `${newURLBase}?queries=${updatedRisonString}`;
+
+
             if (action === 'aqlexplorer') {
                 let prefix = '';
                 if (isGoogleDocs) {
@@ -441,17 +441,33 @@ const showJSONEditor = (initialRisonSearchString) => {
 
             } else if (action === 'apply') {
                 if (isGoogleDocs) {
-                    window.open(`https://www.appannie.com/labs/projects/aql-explorer?queries=(aql_explorer:${updatedRisonString})`)
+
+                    destroyEditor();
+                    const $bubble = $('#docs-link-bubble');
+                    const $editLinkBtn = $bubble.find('.docs-bubble-button[aria-label="Edit link"]');
+                    $editLinkBtn.click();
+
+                    window.requestAnimationFrame(() => {
+                        
+                        window.requestAnimationFrame(() => {
+                            const $linkInput = $('.docs-linkbubble-bubble.docs-calloutbubble-bubble .docs-link-urlinput-url-container .docs-link-urlinput-url');
+                            $('#docs-linkbubble-link-text').html(newURL).attr('href', newURL);
+                            $linkInput.val(newURL);
+                        });
+
+                    });
 
                 } else {
                     location.search = `?queries=${updatedRisonString}`;
                 }
 
-                
-
             } else if(action === 'copy') {
 
                 copyToClipboard(updatedEditorContent);
+
+            } else if(action === 'copyURL') {
+
+                copyToClipboard(newURL);
 
             } else if(action === 'fullScreen') {
                 $editor.height('90%');
@@ -477,6 +493,13 @@ const showJSONEditor = (initialRisonSearchString) => {
             }
 
         });
+
+        // esc to close
+        $editor.on('keydown', (evt) => {
+            if (evt.keyCode === 27) {
+                destroyEditor();
+            }
+        })
     }
 
 
@@ -491,12 +514,10 @@ const showJSONEditor = (initialRisonSearchString) => {
 // init =========================
 function initScript() {
     appendCSSStyle('div[class*="FeedbackWidget__"] { display: none; }');
-    fixJiraLinkRedirection();
 
     $(() => {
         initAQLDetector();
     })
-    
 }
 
 initScript();
