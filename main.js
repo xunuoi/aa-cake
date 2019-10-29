@@ -58,17 +58,14 @@ const getQueryJSONFromURL = (searchString) => {
         search: searchString || location.search,
     };
 
-    let queryJSON;
-    try {
-        const queriesRison = getUrlParameter(pageLocation, 'queries');
-        if (!queriesRison) {
-            throw Error('No valid queries Rison params in URL');
-        }
-        queryJSON = rison.decode(queriesRison);
-  
-    } catch (err) {
-        console.error(err);
+    const queriesRison = getUrlParameter(pageLocation, 'queries');
+
+    if (!queriesRison) {
+        throw Error('No valid queries Rison params in URL');
     }
+
+    const queryJSON = rison.decode(queriesRison);
+
 
     return queryJSON;
 }
@@ -379,13 +376,21 @@ const showJSONEditor = (initialLinkURL, initialRisonSearchString) => {
             $(document.body).append(EDITOR_LAYOUT);
         }
 
-        const jsonContent = getQueryJSONFromURL(initialRisonSearchString);
-        const $editor = $('#aa_cake_jsoneditor').focus();
-        $editor.val(JSON.stringify(jsonContent, null, 4));
+        let jsonContent;
+        let error;
 
-        if (isGoogleDocs) {
-            // hide apply button
-            $('#aa_cake_jsoneditor_panel .aa_cake_action[data-action="apply"]').remove();
+        try {
+            jsonContent = getQueryJSONFromURL(initialRisonSearchString);
+        } catch (err) {
+            error = err;
+        }
+        
+        const $editor = $('#aa_cake_jsoneditor').focus();
+
+        if (error) {
+            $editor.val(error);
+        } else {
+            $editor.val(JSON.stringify(jsonContent, null, 4));
         }
 
         return $editor;
@@ -402,14 +407,28 @@ const showJSONEditor = (initialLinkURL, initialRisonSearchString) => {
     }
 
     const bindEditorEvent = ($editor) => {
+        // esc to close
+        $editor.on('keydown', (evt) => {
+            if (evt.keyCode === 27) {
+                destroyEditor();
+            }
+        })
+
         $('#aa_cake_jsoneditor_panel .aa_cake_json_editor_menus').on('click', '.aa_cake_action', function(evt) {
             evt.preventDefault();
             evt.stopPropagation();
 
             const $btn = $(this);
             const action = $btn.attr('data-action');
-            const updatedEditorContent = getEditorContent($editor);
 
+            // close panel
+            if (action === 'close') {
+                destroyEditor();
+
+                return false;
+            }
+
+            const updatedEditorContent = getEditorContent($editor);
             let jsonData;
             let minifiedJSONString;
             let formatedJSONString;
@@ -443,6 +462,7 @@ const showJSONEditor = (initialLinkURL, initialRisonSearchString) => {
                 if (isGoogleDocs) {
 
                     destroyEditor();
+
                     const $bubble = $('#docs-link-bubble');
                     const $editLinkBtn = $bubble.find('.docs-bubble-button[aria-label="Edit link"]');
                     $editLinkBtn.click();
@@ -450,9 +470,33 @@ const showJSONEditor = (initialLinkURL, initialRisonSearchString) => {
                     window.requestAnimationFrame(() => {
                         
                         window.requestAnimationFrame(() => {
-                            const $linkInput = $('.docs-linkbubble-bubble.docs-calloutbubble-bubble .docs-link-urlinput-url-container .docs-link-urlinput-url');
+                            const $editBubble = $('.docs-linkbubble-bubble.docs-calloutbubble-bubble');
+                            const $linkInput =  $editBubble.find('.docs-link-urlinput-url-container .docs-link-urlinput-url');
                             $('#docs-linkbubble-link-text').html(newURL).attr('href', newURL);
-                            $linkInput.val(newURL);
+                            $linkInput.val(newURL).select();
+
+                            const linkInput = $linkInput.get(0);
+                            const evtOps = {
+                                bubbles: true,
+                                cancelBubble: false,
+                                cancelable: false,
+                                composed: true,
+                                data: null,
+                                inputType: "insertFromPaste",
+                                isComposing: false,
+                                isTrusted: true,
+                                returnValue: true,
+                                sourceCapabilities: null,
+                                view: null,
+                                which: 0
+                            };
+                            const inputEvent = new Event('input', evtOps);
+                            linkInput.dispatchEvent(inputEvent);
+
+                            const $applyBtn = $editBubble.find('.docs-link-insertlinkbubble .jfk-button-action');
+                            
+                            $applyBtn.click();
+                            
                         });
 
                     });
@@ -486,20 +530,10 @@ const showJSONEditor = (initialLinkURL, initialRisonSearchString) => {
                 $btn.text('Full Screen');
                 $btn.attr('data-action', 'fullScreen');
 
-            } else if (action === 'close') {
-
-                destroyEditor();
-
             }
 
         });
 
-        // esc to close
-        $editor.on('keydown', (evt) => {
-            if (evt.keyCode === 27) {
-                destroyEditor();
-            }
-        })
     }
 
 
