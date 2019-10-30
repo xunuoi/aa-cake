@@ -426,6 +426,25 @@ const showJSONEditor = (initialLinkURL, initialRisonSearchString) => {
                 destroyEditor();
 
                 return false;
+            } else if(action === 'fullScreen') {
+                $editor.height('90%');
+
+                $('#aa_cake_jsoneditor_panel').get(0)
+                    .requestFullscreen();
+
+                $btn.text('Exit Full Screen');
+                $btn.attr('data-action', 'exitFullScreen');
+
+                return true;
+                
+            } else if(action === 'exitFullScreen') {
+                $editor.height('normal');
+
+                document.exitFullscreen();
+                $btn.text('Full Screen');
+                $btn.attr('data-action', 'fullScreen');
+
+                return true;
             }
 
             const updatedEditorContent = getEditorContent($editor);
@@ -512,23 +531,6 @@ const showJSONEditor = (initialLinkURL, initialRisonSearchString) => {
             } else if(action === 'copyURL') {
 
                 copyToClipboard(newURL);
-
-            } else if(action === 'fullScreen') {
-                $editor.height('90%');
-
-                $('#aa_cake_jsoneditor_panel').get(0)
-                    .requestFullscreen();
-
-                $btn.text('Exit Full Screen');
-                $btn.attr('data-action', 'exitFullScreen');
-
-                
-            } else if(action === 'exitFullScreen') {
-                $editor.height('normal');
-
-                document.exitFullscreen();
-                $btn.text('Full Screen');
-                $btn.attr('data-action', 'fullScreen');
 
             }
 
