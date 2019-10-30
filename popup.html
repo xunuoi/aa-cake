@@ -21,17 +21,18 @@ ul,li {
     margin: 0;
     padding: 0;
 }
+
 .ui-panel {
     width: 100%;
     min-width: 180px;
 }
+
 .ui-panel-title {
     position: relative;
     width: 100%;
     padding: 6px 4px;
-    /* text-align:center; */
-    /*color: #d875a1;*/
 }
+
 .ui-panel-main {
     width: 100%;
     display: flex;
@@ -110,14 +111,6 @@ ul,li {
     text-align: center;
 }
 
-#action-tip {
-    color: red;
-    height: 16px;
-    line-height: 14px;
-    font-size: 10px;
-    text-align: center;
-}
-
 .mc-logo {
     width: 24px;
     height: 24px;
@@ -129,6 +122,7 @@ ul,li {
     left: 65px;
     top: 12px;
 }
+
 #cake-title.highlight {
     color: red;
 }
@@ -146,9 +140,8 @@ ul,li {
         <img class="mc-logo" width="24" height="24" src="cake-mc.gif" />
     </div>
     <div id="action-panel" class="ui-panel-main">
-        <!-- <div id="action-tip"></div> -->
         <div class="ui-btn action_btn" data-action="clean">Clean and Reload</div>
-        <div class="ui-btn action_btn hide" data-action="fold" data-type="test" >Fold Snaps</div>
+        <div class="ui-btn action_btn hide" data-action="fold" data-type="snap" >Fold Snaps</div>
         <div class="ui-btn action_btn hide" data-action="fold" data-type="test">Fold Tests</div>
         <div class="ui-btn action_btn hide" data-action="switch" data-type="localhost">Loading...</div>
         <div class="ui-btn static_action_btn hide" data-action="copyJSON">Copy JSON</div>

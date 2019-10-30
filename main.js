@@ -70,6 +70,11 @@ const getQueryJSONFromURL = (searchString) => {
     return queryJSON;
 }
 
+const scrollPageTo = (position) => {
+    document.body.scrollTop = position || 0;
+    document.documentElement.scrollTop = position || 0;
+}
+
 // =======message===
 function sendMessage(data, cb){
     chrome.runtime.sendMessage(data, cb);
@@ -109,10 +114,6 @@ const sendAction = (action, data, cb) => {
         );;
 }
 
-const scrollPageTo = (position) => {
-    document.body.scrollTop = position || 0;
-    document.documentElement.scrollTop = position || 0;
-}
 
 // Business ===========
 
@@ -163,6 +164,7 @@ const actionMessageMap = {
 }
 
 // business =======
+
 const isGoogleDocs = location.host.match('docs.google.com');
 
 function cleanAndReload() {
@@ -192,7 +194,7 @@ function foldFiles(type) {
     });
 }
 
-const initAQLDetector = () => {
+const initAQLDetectorForGoogleDoc = () => {
     const svgIcon = `
         <svg width="18" height="18" viewBox="0, 0, 42, 32" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
             <g transform="translate(2.5 0)" fill="currentColor" fill-rule="evenodd" stroke="currentColor" stroke-width="1.5">
@@ -205,6 +207,12 @@ const initAQLDetector = () => {
     if (!isGoogleDocs) {
         return false;
     }
+
+    appendCSSStyle(`
+        .docs-bubble a.aa_cake_highlight_style {
+            color: red !important;
+        }
+    `);
 
 
     $('.kix-zoomdocumentplugin-inner').on('click', (evt) => {
@@ -491,7 +499,6 @@ const showJSONEditor = (initialLinkURL, initialRisonSearchString) => {
                         window.requestAnimationFrame(() => {
                             const $editBubble = $('.docs-linkbubble-bubble.docs-calloutbubble-bubble');
                             const $linkInput =  $editBubble.find('.docs-link-urlinput-url-container .docs-link-urlinput-url');
-                            $('#docs-linkbubble-link-text').html(newURL).attr('href', newURL);
                             $linkInput.val(newURL).select();
 
                             const linkInput = $linkInput.get(0);
@@ -513,8 +520,24 @@ const showJSONEditor = (initialLinkURL, initialRisonSearchString) => {
                             linkInput.dispatchEvent(inputEvent);
 
                             const $applyBtn = $editBubble.find('.docs-link-insertlinkbubble .jfk-button-action');
+
+                            // Have to trigger mousedown then mouseup
+                            const applyBtn = $applyBtn.get(0);
+                            applyBtn.dispatchEvent(new MouseEvent('mousedown'))
+                            applyBtn.dispatchEvent(new MouseEvent('mouseup'));
                             
-                            $applyBtn.click();
+                            // show link updated tip
+                            window.requestAnimationFrame(() => {
+                                const $linkA = $('#docs-linkbubble-link-text');
+                                const originalText = $linkA.html();
+
+                                $linkA.addClass('aa_cake_highlight_style').html('URL Link Updated');
+
+                                setTimeout(() => $linkA
+                                    .html(originalText)
+                                    .removeClass('aa_cake_highlight_style'), 
+                                800);
+                            });
                             
                         });
 
@@ -552,7 +575,7 @@ function initScript() {
     appendCSSStyle('div[class*="FeedbackWidget__"] { display: none; }');
 
     $(() => {
-        initAQLDetector();
+        initAQLDetectorForGoogleDoc();
     })
 }
 
