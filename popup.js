@@ -179,8 +179,8 @@ const detectMainPageHost = (maiPageLocation) => {
 
     // Show different actions for different sites
     if (maiPageLocation.href.match(/git\.appannie/)) {
-        // gitlab site
-        $actionPanel.find('.action_btn[data-action="fold"]').removeClass('hide');
+        // FIXME: Disabled fold feature now
+        // $actionPanel.find('.action_btn[data-action="fold"]').removeClass('hide');
     } else {
         // none gitlab site
         $actionPanel.find('.action_btn[data-action="switch"]').removeClass('hide');
