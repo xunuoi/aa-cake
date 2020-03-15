@@ -289,10 +289,9 @@ const initAQLDetectorForGoogleDoc = () => {
 
 
 const showJSONEditor = (initialLinkURL, initialRisonSearchString) => {
-
-    let editorPanelWidth = 600;
-    let editorPanelHeight = 640;
-    let editorHeight = 540;
+    let editorPanelWidth = 640;
+    let editorPanelHeight = 660;
+    let editorHeight = 560;
 
     if (window.innerHeight <= 640) {
         editorPanelHeight = window.innerHeight * 0.86;
@@ -336,7 +335,7 @@ const showJSONEditor = (initialLinkURL, initialRisonSearchString) => {
             padding: 4px;
         }
 
-        #aa_cake_jsoneditor {
+        #aa_cake_jsoneditor textarea {
             box-sizing: border-box;
             width: 100%;
             min-height: ${editorHeight}px;
@@ -358,12 +357,11 @@ const showJSONEditor = (initialLinkURL, initialRisonSearchString) => {
     const EDITOR_LAYOUT = `
         <div id="aa_cake_jsoneditor_panel">
             <div class="aa_cake_json_editor_header">Query JSON</div>
-            <textarea id="aa_cake_jsoneditor"></textarea>
-
+            <div id="aa_cake_jsoneditor"></div>
             <div class="aa_cake_json_editor_menus">
                 <button class="aa_cake_action" data-action="copyURL">Copy URL</button>
                 <button class="aa_cake_action" data-action="copy">Copy</button>
-                <button class="aa_cake_action" data-action="apply">Apply</button>
+                <button class="aa_cake_action" data-action="apply">Apply Change</button>
                 <button class="aa_cake_action" data-action="aqlexplorer">Open in AQL Explorer</button>
                 <button class="aa_cake_action toggle_fullscreen" data-action="fullScreen">Full Screen</button>
                 <button class="aa_cake_action" data-action="close">Close</button>
@@ -375,14 +373,20 @@ const showJSONEditor = (initialLinkURL, initialRisonSearchString) => {
         <div id="aa_cake_jsoneditor_mask"></div>;
     `;
 
+    let textEditor;
     let editorCSSStyle;
 
+    let isForAQLExplorer = false;
     const initEditor = () => {
+        
         if (!$('#aa_cake_jsoneditor_panel').length) {
             editorCSSStyle = appendCSSStyle(EDITOR_CSS_STYLE);
             $(document.body).append(EDITOR_MASK_LAYOUT);
             $(document.body).append(EDITOR_LAYOUT);
         }
+        const $editorContainer = $('#aa_cake_jsoneditor');
+        $editor = $(new LinedTextArea($editorContainer.get(0))).focus();
+
 
         let jsonContent;
         let error;
@@ -393,12 +397,20 @@ const showJSONEditor = (initialLinkURL, initialRisonSearchString) => {
             error = err;
         }
         
-        const $editor = $('#aa_cake_jsoneditor').focus();
-
         if (error) {
             $editor.val(error);
         } else {
+           if (jsonContent.aql_explorer) {
+               jsonContent = jsonContent.aql_explorer;
+               isForAQLExplorer = true;
+           }
+
             $editor.val(JSON.stringify(jsonContent, null, 4));
+        }
+
+        // FIXME: Override the height
+        $editor.height = (val) => {
+            $editorContainer.height(val);
         }
 
         return $editor;
@@ -408,6 +420,8 @@ const showJSONEditor = (initialLinkURL, initialRisonSearchString) => {
         $('#aa_cake_jsoneditor_panel').off('click').remove();
         $('#aa_cake_jsoneditor_mask').remove();
         $(editorCSSStyle).remove();
+
+        isForAQLExplorer = false;
     };
 
     const getEditorContent = ($editor) => {
@@ -475,7 +489,7 @@ const showJSONEditor = (initialLinkURL, initialRisonSearchString) => {
             }
 
             const newURLBase = initialLinkURL.slice(0, initialLinkURL.indexOf('?'));
-            const newURL = `${newURLBase}?queries=${updatedRisonString}`;
+            const newURL = `${newURLBase}?queries=${isForAQLExplorer ? `(aql_explorer:${updatedRisonString})`: updatedRisonString}`;
 
 
             if (action === 'aqlexplorer') {
@@ -544,7 +558,7 @@ const showJSONEditor = (initialLinkURL, initialRisonSearchString) => {
                     });
 
                 } else {
-                    location.search = `?queries=${updatedRisonString}`;
+                    location.search = `?queries=${isForAQLExplorer ? `(aql_explorer:${updatedRisonString})`: updatedRisonString}`;
                 }
 
             } else if(action === 'copy') {
